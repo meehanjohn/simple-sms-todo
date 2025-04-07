@@ -1,0 +1,27 @@
+name: Terraform Plan
+on: [pull_request]
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write # To comment plan output
+      id-token: write # For Workload Identity Federation
+    steps:
+    - uses: actions/checkout@v3
+    - id: 'auth'
+      uses: 'google-github-actions/auth@v1'
+      with:
+        workload_identity_provider: 'projects/${{ secrets.GCP_PROJECT_ID }}/locations/global/workloadIdentityPools/your-pool-name/providers/your-provider-name' # Replace with your WIF provider details
+        service_account: '${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}' # Service account GitHub Actions will impersonate
+    - uses: hashicorp/setup-terraform@v2
+    - name: Terraform Init
+      run: terraform init
+      working-directory: ./terraform # Adjust if your .tf files are elsewhere
+    - name: Terraform Validate
+      run: terraform validate
+      working-directory: ./terraform
+    - name: Terraform Plan
+      run: terraform plan -no-color # -no-color helps with parsing/posting
+      working-directory: ./terraform
+      # Optional: Add step to comment plan output on PR
