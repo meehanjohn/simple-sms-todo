@@ -17,7 +17,8 @@ locals {
     "cloudresourcemanager.googleapis.com",
     "serviceusage.googleapis.com",
     "storage-component.googleapis.com", # Often needed for storage operations
-    "storage-api.googleapis.com"       # Often needed for storage operations
+    "storage-api.googleapis.com",       # Often needed for storage operations
+    "eventarc.googleapis.com"
   ])
 }
 

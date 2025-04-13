@@ -31,8 +31,43 @@ resource "google_project_iam_member" "function_log_writer" {
 }
 
 # --- Service Account and WIF for GitHub Actions (Terraform Runner) - No change here ---
-# ... (google_service_account.github_actions_runner, WIF pool/provider, IAM bindings for runner) ...
-# Keep the existing for_each for github_runner_permissions
+resource "google_service_account" "github_actions_runner" {
+  project      = var.project_id
+  account_id   = "github-actions-sms-todo"
+  display_name = "Service Account for GitHub Actions (SMS TODO)"
+}
+
+resource "google_iam_workload_identity_pool" "github_pool" {
+  project                   = var.project_id
+  workload_identity_pool_id = "github-sms-todo-pool" # Pool name can be shared across repos if desired
+  display_name              = "GitHub Actions Pool (SMS TODO)"
+}
+
+resource "google_iam_workload_identity_pool_provider" "github_provider" {
+  project                            = var.project_id
+  workload_identity_pool_id          = google_iam_workload_identity_pool.github_pool.workload_identity_pool_id
+  workload_identity_pool_provider_id = "github-sms-todo-provider" # Provider name
+  display_name                       = "Actions Provider (SMS TODO)"
+  attribute_mapping = {
+    "google.subject"       = "assertion.sub" # Standard mapping
+    "attribute.actor"      = "assertion.actor"
+    "attribute.repository" = "assertion.repository" # Map GitHub repo claim
+  }
+  oidc {
+    issuer_uri = "https://token.actions.githubusercontent.com"
+  }
+  # Restrict provider to only be used by your specific repository
+  attribute_condition = "attribute.repository == '${var.github_repo}'"
+}
+
+# Grant the GitHub Actions identity permission to impersonate the runner SA
+resource "google_service_account_iam_member" "github_wif_impersonation" {
+  service_account_id = google_service_account.github_actions_runner.name # The SA to impersonate
+  role               = "roles/iam.workloadIdentityUser"
+  # This principal represents requests from the specific GitHub repo via the WIF provider
+  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github_pool.name}/attribute.repository/${var.github_repo}"
+}
+
 locals {
   github_runner_roles = [
     "roles/cloudfunctions.developer",   # Create/update/delete functions
@@ -42,7 +77,7 @@ locals {
     "roles/secretmanager.admin",        # Manage secrets (needed to create/update secret resources) - Tighten if possible
     "roles/datastore.owner",            # Manage Firestore (can use datastore.user if only R/W needed after creation)
     "roles/serviceusage.serviceUsageAdmin", # Enable APIs
-    "roles/cloudresourcemanager.projectIamAdmin" # Potentially needed to set IAM policies on resources - scope down if possible
+    "roles/resourcemanager.projectIamAdmin" # Potentially needed to set IAM policies on resources - scope down if possible
   ]
 }
 resource "google_project_iam_member" "github_runner_permissions" {

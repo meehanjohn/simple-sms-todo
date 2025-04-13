@@ -14,12 +14,8 @@ variable "vonage_webhook_ips" {
   type        = list(string)
   # Example - Replace with actual Vonage IPs!
   default = [
-    "174.36.197.192/28",
-    "174.37.245.192/28",
-    "173.193.199.16/28",
-    "119.81.44.0/28",
-    "203.10.49.48/28",
-    "101.0.81.192/28"
+    "216.147.0.0/18",
+    "168.100.64.0/18",
     # Add all relevant IPs from the Vonage documentation for your region/product
   ]
 }
@@ -39,13 +35,13 @@ variable "function_name" {
 variable "function_source_dir" {
   description = "Path to the directory containing the function's Python code (app.py, requirements.txt)."
   type        = string
-  default     = "../" # Assumes terraform/ is one level below the app code
+  default     = "../src/" # Assumes terraform/ is one level below the app code
 }
 
 variable "function_entry_point" {
   description = "The entry point function/object name within your Python code."
   type        = string
-  default     = "app" # Matches the default Flask app object name in the example app.py
+  default     = "sms_todo_handler" # Matches the default Flask app object name in the example app.py
 }
 
 variable "function_runtime" {

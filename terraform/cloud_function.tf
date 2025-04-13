@@ -2,7 +2,14 @@
 data "archive_file" "function_source" {
   type        = "zip"
   source_dir  = var.function_source_dir
-  output_path = "${path.tmp}/function_source_${timestamp()}.zip" # Temporary zip file location
+  output_path = "${path.module}/files/function_source_${timestamp()}.zip" # Temporary zip file location
+}
+
+# Upload the zipped code to the GCS bucket
+resource "google_storage_bucket_object" "function_source_archive" {
+  name   = "${var.function_name}-${data.archive_file.function_source.output_md5}.zip"
+  bucket = google_storage_bucket.function_source_code.name
+  source = data.archive_file.function_source.output_path # Path to the zipped file
 }
 
 # Cloud Function (V2) Resource
@@ -25,7 +32,7 @@ resource "google_cloudfunctions2_function" "default" {
   service_config {
     max_instance_count             = 3
     min_instance_count             = 0
-    available_memory               = "128Mi"
+    available_memory               = "256Mi"
     timeout_seconds                = 60
     ingress_settings               = "ALLOW_ALL" # Rely on signature verification in app
     all_traffic_on_latest_revision = true
@@ -48,12 +55,6 @@ resource "google_cloudfunctions2_function" "default" {
     # environment_variables = {
     #   GCP_PROJECT_ID = var.project_id
     # }
-  }
-
-  event_trigger {
-    trigger_region = var.region
-    event_type     = "google.cloud.functions.http"
-    retry_policy   = "RETRY_POLICY_DO_NOT_RETRY"
   }
 
   # Ensure dependent services/permissions are ready
