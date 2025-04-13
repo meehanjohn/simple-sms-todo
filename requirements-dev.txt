@@ -1,0 +1,6 @@
+# requirements-dev.txt
+-r src/requirements.txt # Include application dependencies
+
+pytest>=7.0.0
+pytest-mock>=3.5.0
+# mock-firestore>=0.13.0 # Optional, if needed for transaction testing

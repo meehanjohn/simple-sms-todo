@@ -33,7 +33,7 @@ The application uses a serverless architecture hosted on Google Cloud Platform:
 ```mermaid
 graph LR
     subgraph User Space
-        U[User (You/Wife)] -- SMS --> V[Vonage Number]
+        U[User] -- SMS --> V[Vonage Number]
     end
 
     subgraph Vonage Cloud
@@ -139,9 +139,6 @@ Follow these steps to prepare your environment for deployment:
     ```bash
     # Bucket for Terraform state (must be globally unique)
     gsutil mb -p YOUR_PROJECT_ID -l YOUR_REGION gs://your-unique-tf-state-bucket-name
-
-    # Bucket for Cloud Function source code (must be globally unique)
-    gsutil mb -p YOUR_PROJECT_ID -l YOUR_REGION gs://your-unique-function-source-bucket-name
     ```
     *Note: Choose an appropriate `YOUR_REGION` (e.g., `us-central1`).*
 

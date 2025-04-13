@@ -2,3 +2,7 @@ env
 __pycache__/
 *.pyc
 .terraform/
+terraform/terraform.tfvars
+terraform/files
+.terraform.lock.hcl
+tfplan
